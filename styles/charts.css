@@ -91,15 +91,15 @@
 
 .chart-card canvas {
     flex: 1;
-    max-height: 300px !important;
-    width: 100% !important;
+    max-height: 250px;
+    width: 100%;
+    border-radius: 8px;
 }
 
 /* Dashboard specific chart sizing */
-#weeklyProgressChart,
-#subjectChart {
-    max-height: 280px !important;
-    max-width: 100% !important;
+.card canvas {
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--border-color);
 }
 
 /* Progress Breakdown */

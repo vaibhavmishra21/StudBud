@@ -1,286 +1,423 @@
-// Chart.js Configuration and Management
-class ChartManager {
+// Custom Chart Implementation using Canvas and SVG
+class CustomChartManager {
     constructor() {
         this.charts = {};
-        this.initializeCharts();
+        this.colors = {
+            primary: '#3b82f6',
+            secondary: '#10b981',
+            tertiary: '#f59e0b',
+            quaternary: '#ef4444',
+            success: '#22c55e',
+            warning: '#eab308',
+            error: '#dc2626'
+        };
     }
     
-    initializeCharts() {
-        // Set default Chart.js options
-        Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');
-        Chart.defaults.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color');
-    }
-    
+    // Create Weekly Progress Line Chart
     createWeeklyProgressChart() {
-        const ctx = document.getElementById('weeklyProgressChart');
-        if (!ctx) return;
+        const canvas = document.getElementById('weeklyProgressChart');
+        if (!canvas) return;
         
-        this.charts.weeklyProgress = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: mockData.weeklyProgress.map(d => d.day),
-                datasets: [{
-                    label: 'Study Hours',
-                    data: mockData.weeklyProgress.map(d => d.hours),
-                    borderColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-color'),
-                    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-color') + '20',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                aspectRatio: 2,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--border-color')
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
-            }
-        });
-    }
-    
-    createSubjectChart() {
-        const ctx = document.getElementById('subjectChart');
-        if (!ctx) return;
+        const ctx = canvas.getContext('2d');
+        const data = mockData.weeklyProgress;
         
-        this.charts.subject = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: mockData.subjectDistribution.map(d => d.subject),
-                datasets: [{
-                    data: mockData.subjectDistribution.map(d => d.hours),
-                    backgroundColor: mockData.subjectDistribution.map(d => d.color),
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                aspectRatio: 1,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            usePointStyle: true
-                        }
-                    }
-                }
-            }
-        });
-    }
-    
-    createDailyStudyChart() {
-        const ctx = document.getElementById('dailyStudyChart');
-        if (!ctx) return;
+        // Set canvas size
+        canvas.width = 400;
+        canvas.height = 200;
         
-        this.charts.dailyStudy = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: mockData.dailyStudyTime.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
-                datasets: [{
-                    label: 'Study Hours',
-                    data: mockData.dailyStudyTime.map(d => d.time),
-                    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-color') + '80',
-                    borderColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-color'),
-                    borderWidth: 1,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                aspectRatio: 2,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--border-color')
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
-            }
-        });
-    }
-    
-    createChapterProgressChart() {
-        const ctx = document.getElementById('chapterProgressChart');
-        if (!ctx) return;
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        this.charts.chapterProgress = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: mockData.chapterProgress.map(d => d.subject),
-                datasets: [
-                    {
-                        label: 'Completed',
-                        data: mockData.chapterProgress.map(d => d.completed),
-                        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-color'),
-                        borderRadius: 4
-                    },
-                    {
-                        label: 'Remaining',
-                        data: mockData.chapterProgress.map(d => d.total - d.completed),
-                        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--border-color'),
-                        borderRadius: 4
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                aspectRatio: 1.5,
-                scales: {
-                    x: {
-                        stacked: true,
-                        grid: {
-                            display: false
-                        }
-                    },
-                    y: {
-                        stacked: true,
-                        beginAtZero: true,
-                        grid: {
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--border-color')
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        position: 'top'
-                    }
-                }
-            }
-        });
-    }
-    
-    createConceptMasteryChart() {
-        const ctx = document.getElementById('conceptMasteryChart');
-        if (!ctx) return;
+        // Chart dimensions
+        const padding = 40;
+        const chartWidth = canvas.width - (padding * 2);
+        const chartHeight = canvas.height - (padding * 2);
         
-        this.charts.conceptMastery = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: mockData.conceptMastery.map(d => d.level),
-                datasets: [{
-                    data: mockData.conceptMastery.map(d => d.count),
-                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                aspectRatio: 1,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            usePointStyle: true
-                        }
-                    }
-                }
-            }
-        });
-    }
-    
-    createLearningVelocityChart() {
-        const ctx = document.getElementById('learningVelocityChart');
-        if (!ctx) return;
+        // Find max value for scaling
+        const maxValue = Math.max(...data.map(d => d.hours));
+        const scale = chartHeight / (maxValue * 1.2);
         
-        this.charts.learningVelocity = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: mockData.learningVelocity.map(d => d.week),
-                datasets: [{
-                    label: 'Concepts Learned',
-                    data: mockData.learningVelocity.map(d => d.concepts),
-                    borderColor: getComputedStyle(document.documentElement).getPropertyValue('--secondary-color'),
-                    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--secondary-color') + '20',
-                    tension: 0.4,
-                    fill: true,
-                    pointBackgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--secondary-color'),
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                aspectRatio: 2,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--border-color')
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
+        // Draw grid lines
+        ctx.strokeStyle = '#e5e7eb';
+        ctx.lineWidth = 1;
+        
+        // Horizontal grid lines
+        for (let i = 0; i <= 5; i++) {
+            const y = padding + (chartHeight / 5) * i;
+            ctx.beginPath();
+            ctx.moveTo(padding, y);
+            ctx.lineTo(padding + chartWidth, y);
+            ctx.stroke();
+        }
+        
+        // Draw line chart
+        ctx.strokeStyle = this.colors.primary;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        
+        data.forEach((point, index) => {
+            const x = padding + (chartWidth / (data.length - 1)) * index;
+            const y = padding + chartHeight - (point.hours * scale);
+            
+            if (index === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
             }
         });
-    }
-    
-    updateChartsForTheme() {
-        // Update all charts when theme changes
-        Object.values(this.charts).forEach(chart => {
-            if (chart) {
-                chart.options.scales.y.grid.color = getComputedStyle(document.documentElement).getPropertyValue('--border-color');
-                chart.update();
-            }
+        
+        ctx.stroke();
+        
+        // Draw data points
+        ctx.fillStyle = this.colors.primary;
+        data.forEach((point, index) => {
+            const x = padding + (chartWidth / (data.length - 1)) * index;
+            const y = padding + chartHeight - (point.hours * scale);
+            
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, 2 * Math.PI);
+            ctx.fill();
         });
-    }
-    
-    destroyChart(chartName) {
-        if (this.charts[chartName]) {
-            this.charts[chartName].destroy();
-            delete this.charts[chartName];
+        
+        // Draw labels
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        
+        data.forEach((point, index) => {
+            const x = padding + (chartWidth / (data.length - 1)) * index;
+            ctx.fillText(point.day, x, canvas.height - 10);
+        });
+        
+        // Y-axis labels
+        ctx.textAlign = 'right';
+        for (let i = 0; i <= 5; i++) {
+            const value = (maxValue * 1.2 / 5) * (5 - i);
+            const y = padding + (chartHeight / 5) * i;
+            ctx.fillText(value.toFixed(1), padding - 10, y + 4);
         }
     }
     
-    destroyAllCharts() {
-        Object.keys(this.charts).forEach(chartName => {
-            this.destroyChart(chartName);
+    // Create Subject Distribution Doughnut Chart
+    createSubjectChart() {
+        const canvas = document.getElementById('subjectChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const data = mockData.subjectDistribution;
+        
+        // Set canvas size
+        canvas.width = 300;
+        canvas.height = 300;
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = 80;
+        const innerRadius = 40;
+        
+        // Calculate total and angles
+        const total = data.reduce((sum, item) => sum + item.hours, 0);
+        let currentAngle = -Math.PI / 2; // Start from top
+        
+        // Draw segments
+        data.forEach((item, index) => {
+            const sliceAngle = (item.hours / total) * 2 * Math.PI;
+            
+            // Draw outer arc
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+            ctx.arc(centerX, centerY, innerRadius, currentAngle + sliceAngle, currentAngle, true);
+            ctx.closePath();
+            ctx.fillStyle = item.color;
+            ctx.fill();
+            
+            currentAngle += sliceAngle;
         });
+        
+        // Draw legend
+        const legendY = canvas.height - 80;
+        data.forEach((item, index) => {
+            const legendX = 20 + (index * 60);
+            
+            // Legend color box
+            ctx.fillStyle = item.color;
+            ctx.fillRect(legendX, legendY, 12, 12);
+            
+            // Legend text
+            ctx.fillStyle = '#374151';
+            ctx.font = '10px Arial';
+            ctx.fillText(item.subject.substring(0, 4), legendX, legendY + 25);
+        });
+    }
+    
+    // Create Daily Study Bar Chart
+    createDailyStudyChart() {
+        const canvas = document.getElementById('dailyStudyChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const data = mockData.dailyStudyTime.slice(-7); // Last 7 days
+        
+        // Set canvas size
+        canvas.width = 400;
+        canvas.height = 200;
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const padding = 40;
+        const chartWidth = canvas.width - (padding * 2);
+        const chartHeight = canvas.height - (padding * 2);
+        const barWidth = chartWidth / data.length - 10;
+        
+        // Find max value
+        const maxValue = Math.max(...data.map(d => d.time));
+        const scale = chartHeight / (maxValue * 1.2);
+        
+        // Draw bars
+        data.forEach((item, index) => {
+            const barHeight = item.time * scale;
+            const x = padding + (chartWidth / data.length) * index + 5;
+            const y = padding + chartHeight - barHeight;
+            
+            // Draw bar
+            ctx.fillStyle = this.colors.primary + '80';
+            ctx.fillRect(x, y, barWidth, barHeight);
+            
+            // Draw bar border
+            ctx.strokeStyle = this.colors.primary;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x, y, barWidth, barHeight);
+            
+            // Draw label
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            const date = new Date(item.date);
+            const label = date.getDate() + '/' + (date.getMonth() + 1);
+            ctx.fillText(label, x + barWidth / 2, canvas.height - 10);
+        });
+    }
+    
+    // Create Chapter Progress Stacked Bar Chart
+    createChapterProgressChart() {
+        const canvas = document.getElementById('chapterProgressChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const data = mockData.chapterProgress;
+        
+        // Set canvas size
+        canvas.width = 400;
+        canvas.height = 200;
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const padding = 40;
+        const chartWidth = canvas.width - (padding * 2);
+        const chartHeight = canvas.height - (padding * 2);
+        const barHeight = 30;
+        const barSpacing = 10;
+        
+        data.forEach((item, index) => {
+            const y = padding + (barHeight + barSpacing) * index;
+            const completedWidth = (item.completed / item.total) * chartWidth;
+            const remainingWidth = ((item.total - item.completed) / item.total) * chartWidth;
+            
+            // Draw completed portion
+            ctx.fillStyle = this.colors.success;
+            ctx.fillRect(padding, y, completedWidth, barHeight);
+            
+            // Draw remaining portion
+            ctx.fillStyle = '#e5e7eb';
+            ctx.fillRect(padding + completedWidth, y, remainingWidth, barHeight);
+            
+            // Draw subject label
+            ctx.fillStyle = '#374151';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(item.subject, padding, y - 5);
+            
+            // Draw progress text
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(`${item.completed}/${item.total}`, padding + chartWidth / 2, y + barHeight / 2 + 4);
+        });
+    }
+    
+    // Create Concept Mastery Pie Chart
+    createConceptMasteryChart() {
+        const canvas = document.getElementById('conceptMasteryChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const data = mockData.conceptMastery;
+        
+        // Set canvas size
+        canvas.width = 250;
+        canvas.height = 250;
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = 80;
+        
+        // Calculate total and angles
+        const total = data.reduce((sum, item) => sum + item.count, 0);
+        let currentAngle = -Math.PI / 2;
+        
+        const colors = [this.colors.success, this.colors.warning, this.colors.error];
+        
+        // Draw segments
+        data.forEach((item, index) => {
+            const sliceAngle = (item.count / total) * 2 * Math.PI;
+            
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+            ctx.closePath();
+            ctx.fillStyle = colors[index];
+            ctx.fill();
+            
+            // Draw percentage text
+            const textAngle = currentAngle + sliceAngle / 2;
+            const textX = centerX + Math.cos(textAngle) * (radius * 0.7);
+            const textY = centerY + Math.sin(textAngle) * (radius * 0.7);
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            const percentage = Math.round((item.count / total) * 100);
+            ctx.fillText(percentage + '%', textX, textY);
+            
+            currentAngle += sliceAngle;
+        });
+        
+        // Draw legend
+        data.forEach((item, index) => {
+            const legendY = canvas.height - 60 + (index * 20);
+            
+            // Legend color box
+            ctx.fillStyle = colors[index];
+            ctx.fillRect(10, legendY, 12, 12);
+            
+            // Legend text
+            ctx.fillStyle = '#374151';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(item.level, 30, legendY + 10);
+        });
+    }
+    
+    // Create Learning Velocity Line Chart
+    createLearningVelocityChart() {
+        const canvas = document.getElementById('learningVelocityChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const data = mockData.learningVelocity;
+        
+        // Set canvas size
+        canvas.width = 400;
+        canvas.height = 200;
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const padding = 40;
+        const chartWidth = canvas.width - (padding * 2);
+        const chartHeight = canvas.height - (padding * 2);
+        
+        // Find max value
+        const maxValue = Math.max(...data.map(d => d.concepts));
+        const scale = chartHeight / (maxValue * 1.2);
+        
+        // Draw area under curve
+        ctx.fillStyle = this.colors.secondary + '20';
+        ctx.beginPath();
+        ctx.moveTo(padding, padding + chartHeight);
+        
+        data.forEach((point, index) => {
+            const x = padding + (chartWidth / (data.length - 1)) * index;
+            const y = padding + chartHeight - (point.concepts * scale);
+            ctx.lineTo(x, y);
+        });
+        
+        ctx.lineTo(padding + chartWidth, padding + chartHeight);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Draw line
+        ctx.strokeStyle = this.colors.secondary;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        
+        data.forEach((point, index) => {
+            const x = padding + (chartWidth / (data.length - 1)) * index;
+            const y = padding + chartHeight - (point.concepts * scale);
+            
+            if (index === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+        
+        ctx.stroke();
+        
+        // Draw data points
+        ctx.fillStyle = this.colors.secondary;
+        data.forEach((point, index) => {
+            const x = padding + (chartWidth / (data.length - 1)) * index;
+            const y = padding + chartHeight - (point.concepts * scale);
+            
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // White center
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(x, y, 2, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillStyle = this.colors.secondary;
+        });
+        
+        // Draw labels
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '10px Arial';
+        ctx.textAlign = 'center';
+        
+        data.forEach((point, index) => {
+            const x = padding + (chartWidth / (data.length - 1)) * index;
+            ctx.fillText(point.week, x, canvas.height - 10);
+        });
+    }
+    
+    // Update all charts when theme changes
+    updateChartsForTheme() {
+        // Update colors based on current theme
+        const root = document.documentElement;
+        this.colors.primary = getComputedStyle(root).getPropertyValue('--primary-color').trim();
+        this.colors.secondary = getComputedStyle(root).getPropertyValue('--secondary-color').trim();
+        
+        // Recreate all charts with new colors
+        setTimeout(() => {
+            this.createWeeklyProgressChart();
+            this.createSubjectChart();
+            this.createDailyStudyChart();
+            this.createChapterProgressChart();
+            this.createConceptMasteryChart();
+            this.createLearningVelocityChart();
+        }, 100);
     }
 }
 
 // Initialize chart manager
-const chartManager = new ChartManager();
+const chartManager = new CustomChartManager();
